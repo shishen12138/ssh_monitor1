@@ -11,7 +11,7 @@ apt install -y wget curl git build-essential libssl-dev zlib1g-dev \
 libbz2-dev libreadline-dev libsqlite3-dev llvm libncurses5-dev libncursesw5-dev \
 xz-utils tk-dev libffi-dev liblzma-dev python3-venv
 
-# 检查 Python 3.13.6
+# 安装 Python 3.13.6（如果没有）
 if ! python3.13 --version &>/dev/null; then
     echo "=== 安装 Python 3.13.6 ==="
     cd /tmp
@@ -29,41 +29,34 @@ echo "=== 创建工作目录 $WORKDIR ==="
 mkdir -p $WORKDIR
 cd $WORKDIR
 
-echo "=== 下载主文件 ==="
-wget -O main.py "$REPO_URL/main.py"
-wget -O start.sh "$REPO_URL/start.sh"
-wget -O config.json "$REPO_URL/config.json"
+echo "=== 下载 main 目录下的所有文件 ==="
+FILES=("main.py" "start.sh" "config.json" "manager.py" "ssh.py" "monitor.py" "importer.py" \
+"logger.py" "routes.py" "ws_monitor.py" "ws_logs.py" "HostMonitorFull.vue")
 
-echo "=== 下载模块文件 ==="
-# host_manager
-mkdir -p host_manager
-wget -O host_manager/manager.py "$REPO_URL/host_manager/manager.py"
+for file in "${FILES[@]}"; do
+    echo "下载 $file ..."
+    wget -qO "$file" "$REPO_URL/$file"
+done
 
-# ssh_client
-mkdir -p ssh_client
-wget -O ssh_client/ssh.py "$REPO_URL/ssh_client/ssh.py"
+echo "=== 创建子目录并整理文件 ==="
+mkdir -p host_manager ssh_client monitoring aws_importer logger web_panel components
 
-# monitoring
-mkdir -p monitoring
-wget -O monitoring/monitor.py "$REPO_URL/monitoring/monitor.py"
+mv manager.py host_manager/
+mv ssh.py ssh_client/
+mv monitor.py monitoring/
+mv importer.py aws_importer/
+mv logger.py logger/
+mv routes.py web_panel/
+mv ws_monitor.py web_panel/
+mv ws_logs.py web_panel/
+mv HostMonitorFull.vue components/
 
-# aws_importer
-mkdir -p aws_importer
-wget -O aws_importer/importer.py "$REPO_URL/aws_importer/importer.py"
-
-# logger
-mkdir -p logger
-wget -O logger/logger.py "$REPO_URL/logger/logger.py"
-
-# web_panel
-mkdir -p web_panel
-wget -O web_panel/routes.py "$REPO_URL/web_panel/routes.py"
-wget -O web_panel/ws_monitor.py "$REPO_URL/web_panel/ws_monitor.py"
-wget -O web_panel/ws_logs.py "$REPO_URL/web_panel/ws_logs.py"
-
-# components (Vue 前端)
-mkdir -p components
-wget -O components/HostMonitorFull.vue "$REPO_URL/components/HostMonitorFull.vue"
+echo "=== 创建 start.sh（绝对路径调用 uvicorn） ==="
+cat > start.sh <<'EOF'
+#!/bin/bash
+/root/ssh_monitor/venv/bin/uvicorn main:app --host 0.0.0.0 --port 12138
+EOF
+chmod +x start.sh
 
 echo "=== 创建 Python 虚拟环境 ==="
 $PYTHON_BIN -m venv venv
@@ -72,10 +65,6 @@ source venv/bin/activate
 echo "=== 安装 Python 依赖 ==="
 pip install --upgrade pip
 pip install fastapi uvicorn paramiko boto3 python-multipart websockets aiofiles
-
-echo "=== 修改 start.sh 端口为 12138 ==="
-sed -i 's/--port [0-9]\+/--port 12138/' start.sh
-chmod +x start.sh
 
 echo "=== 创建 systemd 服务 ==="
 SERVICE_FILE="/etc/systemd/system/ssh_monitor.service"
@@ -97,10 +86,10 @@ Environment=PYTHONUNBUFFERED=1
 WantedBy=multi-user.target
 EOF
 
-echo "=== 重新加载 systemd ==="
+echo "=== 重新加载 systemd 并启动服务 ==="
 systemctl daemon-reload
 systemctl enable ssh_monitor
-systemctl start ssh_monitor
+systemctl restart ssh_monitor
 
 IP=$(hostname -I | awk '{print $1}')
 echo "=== 部署完成 ==="
