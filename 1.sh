@@ -3,7 +3,7 @@
 set -e
 
 WORKDIR="/root/ssh_monitor"
-REPO_URL="wget https://raw.githubusercontent.com/shishen12138/ssh_monitor1/main"
+REPO_URL="https://raw.githubusercontent.com/shishen12138/ssh_monitor1/main"
 
 echo "=== 安装系统依赖 ==="
 apt update
