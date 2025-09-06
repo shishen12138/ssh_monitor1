@@ -29,17 +29,41 @@ echo "=== 创建工作目录 $WORKDIR ==="
 mkdir -p $WORKDIR
 cd $WORKDIR
 
-echo "=== 下载源码文件 ==="
-FILES=("main.py" "start.sh" "config.json")
-for file in "${FILES[@]}"; do
-    wget -O $file "$REPO_URL/$file"
-done
+echo "=== 下载主文件 ==="
+wget -O main.py "$REPO_URL/main.py"
+wget -O start.sh "$REPO_URL/start.sh"
+wget -O config.json "$REPO_URL/config.json"
 
-DIRS=("host_manager" "ssh_client" "monitoring" "aws_importer" "logger" "web_panel" "components")
-for dir in "${DIRS[@]}"; do
-    mkdir -p $dir
-    wget -r -np -nH --cut-dirs=1 -P $dir "$REPO_URL/$dir/"
-done
+echo "=== 下载模块文件 ==="
+# host_manager
+mkdir -p host_manager
+wget -O host_manager/manager.py "$REPO_URL/host_manager/manager.py"
+
+# ssh_client
+mkdir -p ssh_client
+wget -O ssh_client/ssh.py "$REPO_URL/ssh_client/ssh.py"
+
+# monitoring
+mkdir -p monitoring
+wget -O monitoring/monitor.py "$REPO_URL/monitoring/monitor.py"
+
+# aws_importer
+mkdir -p aws_importer
+wget -O aws_importer/importer.py "$REPO_URL/aws_importer/importer.py"
+
+# logger
+mkdir -p logger
+wget -O logger/logger.py "$REPO_URL/logger/logger.py"
+
+# web_panel
+mkdir -p web_panel
+wget -O web_panel/routes.py "$REPO_URL/web_panel/routes.py"
+wget -O web_panel/ws_monitor.py "$REPO_URL/web_panel/ws_monitor.py"
+wget -O web_panel/ws_logs.py "$REPO_URL/web_panel/ws_logs.py"
+
+# components (Vue 前端)
+mkdir -p components
+wget -O components/HostMonitorFull.vue "$REPO_URL/components/HostMonitorFull.vue"
 
 echo "=== 创建 Python 虚拟环境 ==="
 $PYTHON_BIN -m venv venv
@@ -81,4 +105,3 @@ systemctl start ssh_monitor
 IP=$(hostname -I | awk '{print $1}')
 echo "=== 部署完成 ==="
 echo "请访问 Web 面板：http://$IP:12138"
-
