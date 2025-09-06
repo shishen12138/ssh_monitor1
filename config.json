@@ -1,0 +1,22 @@
+{
+  "server": {
+    "host": "0.0.0.0",
+    "port": 12138
+  },
+  "auth": {
+    "default_user": "root",
+    "default_password": "Qcy1994@06"
+  },
+  "storage": {
+    "hosts_file": "/root/ssh_monitor/hosts.json",
+    "log_file": "/root/ssh_monitor/ssh_monitor.log"
+  },
+  "aws": {
+    "region": "ap-northeast-1"
+  },
+  "monitor": {
+    "interval_seconds": 5,
+    "top_n_processes": 5,
+    "timeout": 10
+  }
+}
